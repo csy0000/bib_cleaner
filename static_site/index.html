@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>BibTeX Cleaner</title>
-    <link rel="stylesheet" href="/static/styles.css" />
+    <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <div class="app">
@@ -53,6 +53,7 @@
             <label class="field">
               <span>Journal abbreviations (one per line: Full Name = Abbrev)</span>
               <span class="field__hint">This will overwrite the iso4 abbreviation.</span>
+              <span class="field__hint">Static mode keeps journal names as-is unless overridden.</span>
               <textarea id="journalAbbrev" spellcheck="false" placeholder="Nature Chemical Biology = Nat. Chem. Biol."></textarea>
             </label>
           </div>
@@ -87,6 +88,6 @@
       </footer>
     </div>
 
-    <script src="/static/app.js"></script>
+    <script src="app.js"></script>
   </body>
 </html>

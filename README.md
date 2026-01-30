@@ -118,6 +118,17 @@ python manage.py runserver 0.0.0.0:8000
 Then open `http://<your-lan-ip>:8000` in a browser on the same network.
 
 ---
+## Static Site (JS)
+
+For GitHub Pages or any static host, use the JS-only build in:
+
+- `clean_my_bib/static_site/index.html`
+
+Open the file directly in a browser, or host the `static_site` folder
+on any static web server. Note: the static version keeps UTF-8 and does
+not auto-abbreviate journal names unless you provide overrides.
+
+---
 
 ## Citation Key Format
 
