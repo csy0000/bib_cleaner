@@ -58,8 +58,8 @@ class UIHandler(SimpleHTTPRequestHandler):
 
 
 def main():
-    server = ThreadingHTTPServer(("127.0.0.1", 8000), UIHandler)
-    print("BibTeX UI running on http://127.0.0.1:8000")
+    server = ThreadingHTTPServer(("0.0.0.0", 8000), UIHandler)
+    print("BibTeX UI running on http://0.0.0.0:8000")
     server.serve_forever()
 
 
