@@ -1,0 +1,12 @@
+name: bibtex-clean
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pip
+  - pip:
+      - bibtexparser>=1.4
+      - pylatexenc>=2.10
+      - titlecase>=2.4
+      - iso4
+
