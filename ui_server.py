@@ -18,6 +18,11 @@ class UIHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(UI_DIR), **kwargs)
 
+    def translate_path(self, path: str) -> str:
+        if path.startswith("/static/"):
+            path = path[len("/static"):]
+        return super().translate_path(path)
+
     def do_POST(self):
         if self.path != "/api/clean":
             self.send_error(HTTPStatus.NOT_FOUND, "Not Found")

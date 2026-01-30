@@ -107,6 +107,17 @@ Then open `http://127.0.0.1:8000` in your browser. Paste your BibTeX,
 adjust options, and the cleaned output updates automatically.
 
 ---
+## Django App
+
+If you want a shareable intranet app, run the Django server:
+
+```bash
+python manage.py runserver 0.0.0.0:8000
+```
+
+Then open `http://<your-lan-ip>:8000` in a browser on the same network.
+
+---
 
 ## Citation Key Format
 

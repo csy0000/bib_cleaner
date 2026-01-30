@@ -9,4 +9,4 @@ dependencies:
       - pylatexenc>=2.10
       - titlecase>=2.4
       - iso4
-
+      - django>=4.2

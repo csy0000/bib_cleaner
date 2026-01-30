@@ -1,0 +1,9 @@
+"""ASGI config for the BibTeX cleaner UI."""
+
+import os
+
+from django.core.asgi import get_asgi_application
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "bibtex_ui.settings")
+
+application = get_asgi_application()

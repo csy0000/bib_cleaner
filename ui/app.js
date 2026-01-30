@@ -163,7 +163,7 @@ downloadBtn.addEventListener("click", () => {
 });
 
 loadExampleBtn.addEventListener("click", async () => {
-  const res = await fetch("sample.bib");
+  const res = await fetch("/static/sample.bib");
   inputBib.value = await res.text();
   updateCounts();
   runClean();
