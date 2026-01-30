@@ -106,6 +106,30 @@ def abbreviate_journal(journal: str, journal_abbrev: dict[str, str] | None = Non
         return journal
 
 
+def make_key(entry: dict) -> str:
+    """
+    firstauthorYYYY_ShortTitle
+    Example: nowak2018_PlasticityInBinding
+    """
+    author = entry.get("author", "")
+    year = entry.get("year", "")
+    title = entry.get("title", "")
+
+    first = author.split(" and ")[0].strip()
+    if "," in first:
+        last = first.split(",")[0].strip()
+    else:
+        last = first.split()[-1].strip() if first else "unknown"
+
+    words = re.findall(r"[A-Za-z0-9]+", title)
+    short = "".join(w.capitalize() for w in words[:4]) or "untitled"
+
+    last = re.sub(r"[^A-Za-z0-9]+", "", last.lower()) or "unknown"
+    year = re.sub(r"[^0-9]+", "", year) or "nd"
+
+    return f"{last}{year}_{short}"
+
+
 def normalize_entry(
     entry: dict,
     keep_fields: set[str],
@@ -142,7 +166,7 @@ def normalize_entry(
         out["note"] = (out.get("note", "") + " " + f"[MISSING: {', '.join(missing)}]").strip()
 
     if regen_keys:
-        out["ID"] = entry.get("ID", "")
+        out["ID"] = make_key(out)
 
     return out
 
