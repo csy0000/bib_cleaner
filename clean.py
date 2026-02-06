@@ -13,16 +13,66 @@ from pylatexenc.latexencode import unicode_to_latex
 from titlecase import titlecase
 
 
-DEFAULT_KEEP_FIELDS = [
-    "author",
-    "title",
-    "journal",
-    "year",
-    "volume",
-    "number",
-    "pages",
-    "doi",
-]
+TYPE_SPECS = {
+    "article": {
+        "ENTRYTYPE": "article",
+        "required_fields": {
+            "author",
+            "title",
+            "journal",
+            "year",
+            "volume",
+            "number",
+            "pages",
+        },
+        "optional_fields":{
+            "doi",
+            "note"
+        }
+    },
+    "pre-print": {
+        "ENTRYTYPE": "article",
+        "required_fields": {
+            "author",
+            "journal",
+            "title",
+            "doi",
+            "year",
+        },
+        "optional_fields":{
+            "note",
+        },
+    },
+    "book": {
+        "ENTRYTYPE": "book",
+        "required_fields": {
+            "author",
+            "title",
+            "publisher",
+            "edition",
+            "year",
+        },
+        "optional_fields":{
+            "note",
+        },
+    },
+    "chapter": {
+        "ENTRYTYPE": "incollection",
+        "required_fields": {
+            "author",
+            "title",
+            "editor",
+            "booktitle",
+            "pages",
+            "publisher",
+            "year",
+        },
+        "optional_fields":{
+            "volume",
+            "note",
+        },
+    },
+}
 
 PROTECT_TITLE_TOKENS = [
     "PROTAC", "PROTACs",
@@ -36,6 +86,7 @@ JOURNAL_ABBREV: dict[str, str] = {}
 
 PAGE_DASH_RE = re.compile(r"\s*(?:–|—|-)\s*")
 BRACED_GROUP_RE = re.compile(r"\{[^{}]*\}")
+MATH_GROUP_RE = re.compile(r"\$(?:\\.|[^$])*\$")
 
 
 def normalize_pages(pages: str) -> str:
@@ -81,8 +132,21 @@ def protect_tokens_in_title(raw_title: str, tokens: Iterable[str]) -> str:
 def smart_titlecase(title: str) -> str:
     if not title:
         return title
-    t = protect_tokens_in_title(title, PROTECT_TITLE_TOKENS)
-    return titlecase(t)
+    
+    math: list[str] = []
+
+    def _stash_math(m):
+        math.append(m.group(0))
+        return f"ZZMATH{len(math) - 1}ZZ"
+
+    tmp = MATH_GROUP_RE.sub(_stash_math, title)
+    tmp = protect_tokens_in_title(tmp, PROTECT_TITLE_TOKENS)
+    tmp = titlecase(tmp)
+
+    for i, grp in enumerate(math):
+        tmp = tmp.replace(f"ZZMATH{i}ZZ", grp)
+
+    return tmp
 
 
 def abbreviate_journal(journal: str, journal_abbrev: dict[str, str] | None = None) -> str:
@@ -132,36 +196,62 @@ def make_key(entry: dict) -> str:
 
 def normalize_entry(
     entry: dict,
-    keep_fields: set[str],
     do_titlecase: bool,
     regen_keys: bool,
     journal_abbrev: dict[str, str] | None = None,
 ) -> dict:
-    if entry.get("ENTRYTYPE", "").lower() != "article":
+    etype = entry.get("ENTRYTYPE", "").lower()
+
+    if etype == "misc":
+        doi = str(entry.get("doi", "")).lower()
+        if "arxiv" in doi:
+            etype = "pre-print"
+            entry = dict(entry)
+            entry["ENTRYTYPE"] = "article"
+            entry["journal"] = "{{arXiv}}"
+            entry["note"] = (entry.get("note", "") + " arxiv detected in DOI").strip()
+
+    if etype == "article":
+        spec = TYPE_SPECS["article"]
+    elif etype == "book":
+        spec = TYPE_SPECS["book"]
+    elif etype == "incollection":
+        spec = TYPE_SPECS["chapter"]
+    elif etype == "pre-print":
+        spec = TYPE_SPECS["pre-print"]
+    else:
+        entry["note"] = (entry.get("note", "") + " Could not detect document type").strip()
         return entry
 
     out = {
-        "ENTRYTYPE": "article",
+        "ENTRYTYPE": spec["ENTRYTYPE"],
         "ID": entry.get("ID", ""),
     }
 
-    for k in keep_fields:
+    for k in spec["required_fields"].union(spec["optional_fields"]):
         if k in entry and str(entry[k]).strip():
             out[k] = str(entry[k]).strip()
 
     if "author" in out:
         out["author"] = latexify(out["author"])
+    if "editor" in out:
+        out["editor"] = latexify(out["editor"])
     if "title" in out:
         out["title"] = latexify(out["title"])
-        if do_titlecase:
+        if do_titlecase and etype != "book": # According to Jessica's example on the wiki the book title is not in title case
             out["title"] = smart_titlecase(out["title"])
+    if "booktitle" in out:
+        out["booktitle"] = latexify(out["booktitle"])
+        if do_titlecase:
+            out["booktitle"] = smart_titlecase(out["booktitle"])
     if "journal" in out:
         out["journal"] = latexify(abbreviate_journal(out["journal"], journal_abbrev=journal_abbrev))
+    if "publisher" in out:
+        out["publisher"] = latexify(out["publisher"])
     if "pages" in out:
         out["pages"] = normalize_pages(out["pages"])
 
-    required = ["author", "title", "journal", "year", "volume", "pages"]
-    missing = [r for r in required if r not in out or not out[r].strip()]
+    missing = [r for r in spec["required_fields"] if r not in out or not out[r].strip()]
     if missing:
         out["note"] = (out.get("note", "") + " " + f"[MISSING: {', '.join(missing)}]").strip()
 
@@ -173,19 +263,16 @@ def normalize_entry(
 
 def clean_bibtex_text(
     text: str,
-    keep_fields: Iterable[str] = DEFAULT_KEEP_FIELDS,
     do_titlecase: bool = True,
     regen_keys: bool = False,
     journal_abbrev: dict[str, str] | None = None,
 ) -> str:
     db = bibtexparser.loads(text)
     new_db = BibDatabase()
-    keep_fields_set = set(keep_fields)
 
     new_db.entries = [
         normalize_entry(
             e,
-            keep_fields=keep_fields_set,
             do_titlecase=do_titlecase,
             regen_keys=regen_keys,
             journal_abbrev=journal_abbrev,
