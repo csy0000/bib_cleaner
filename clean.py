@@ -159,7 +159,10 @@ def abbreviate_journal(journal: str, journal_abbrev: dict[str, str] | None = Non
 
     try:
         from iso4 import abbreviate as iso4_abbreviate
-        return iso4_abbreviate(journal)
+        journal_abbrev = iso4_abbreviate(journal)
+        if 'AC ' in journal_abbrev:
+            journal_abbrev = journal_abbrev.replace('AC ', 'ACS ')
+        return journal_abbrev
     except LookupError:
         import nltk
         nltk.download("wordnet", quiet=True)
