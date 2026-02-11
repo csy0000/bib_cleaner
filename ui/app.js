@@ -194,9 +194,17 @@ autoClean.addEventListener("change", () => {
 });
 
 optionsToggle.addEventListener("click", () => {
-  const isOpen = optionsBody.classList.toggle("is-open");
+  const isOpen = !optionsBody.classList.contains("is-open");
+  optionsBody.classList.toggle("is-open", isOpen);
+  optionsBody.style.display = isOpen ? "block" : "none";
+  optionsToggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
   optionsToggle.textContent = isOpen ? "Hide advanced" : "Show advanced";
 });
+
+// Initialize to collapsed state explicitly, regardless of stale CSS cache.
+optionsBody.classList.remove("is-open");
+optionsBody.style.display = "none";
+optionsToggle.setAttribute("aria-expanded", "false");
 
 updateCounts();
 setStatus("Ready");
