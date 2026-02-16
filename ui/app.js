@@ -3,6 +3,7 @@ const outputBib = document.getElementById("outputBib");
 const keepFields = document.getElementById("keepFields");
 const journalAbbrev = document.getElementById("journalAbbrev");
 const titlecase = document.getElementById("titlecase");
+const protectTitlecase = document.getElementById("protectTitlecase");
 const regenKeys = document.getElementById("regenKeys");
 const autoClean = document.getElementById("autoClean");
 const inputCount = document.getElementById("inputCount");
@@ -102,6 +103,7 @@ async function runClean() {
     input: inputBib.value,
     keep_fields: parseKeepFields(),
     titlecase: titlecase.checked,
+    protectTitlecase: protectTitlecase.checked, 
     regen_keys: regenKeys.checked,
     journal_abbrev: parseJournalAbbrev(),
   };
@@ -183,7 +185,7 @@ clearBtn.addEventListener("click", () => {
   });
 });
 
-[titlecase, regenKeys].forEach((el) => {
+[titlecase, protectTitlecase, regenKeys].forEach((el) => {
   el.addEventListener("change", () => scheduleClean());
 });
 
