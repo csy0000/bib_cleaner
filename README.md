@@ -16,8 +16,7 @@ conda activate bibtex-clean
 ## Run
 
 ```bash
-python manage.py migrate
-python manage.py runserver 0.0.0.0:8888
+python manage.py migrate && python manage.py runserver 0.0.0.0:8888
 ```
 
 Open:
