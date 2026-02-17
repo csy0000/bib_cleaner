@@ -27,6 +27,7 @@ TYPE_SPECS = {
         },
         "optional_fields":{
             "doi",
+            "date",
             "note"
         }
     },
@@ -265,6 +266,11 @@ def normalize_entry(
         out["publisher"] = latexify(out["publisher"])
     if "pages" in out:
         out["pages"] = normalize_pages(out["pages"])
+    if "year" not in out and "date" in out:
+        year_match = re.search(r"\b(19|20)\d{2}\b", out["date"])
+        if year_match:
+            out["year"] = year_match.group(0)
+            out.pop("date")
 
     missing = [r for r in spec["required_fields"] if r not in out or not out[r].strip()]
     if missing:
