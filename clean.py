@@ -27,6 +27,7 @@ TYPE_SPECS = {
         },
         "optional_fields":{
             "doi",
+            "date",
             "note"
         }
     },
@@ -148,6 +149,15 @@ def smart_titlecase(title: str) -> str:
 
     return tmp
 
+def protecting_titlecase(title: str) -> str:
+    def protect_word(word):
+        if word.isupper():
+            return f'{{{word}}}'
+        elif word and word[0].isupper():
+            return f'{{{word[0]}}}{word[1:]}'
+        else:
+            return word
+    return ' '.join(protect_word(word) if word[1:-1] not in PROTECT_TITLE_TOKENS else word for word in title.split())
 
 def abbreviate_journal(journal: str, journal_abbrev: dict[str, str] | None = None) -> str:
     if not journal:
@@ -200,6 +210,7 @@ def make_key(entry: dict) -> str:
 def normalize_entry(
     entry: dict,
     do_titlecase: bool,
+    protect_titlecase: bool,
     regen_keys: bool,
     journal_abbrev: dict[str, str] | None = None,
 ) -> dict:
@@ -241,8 +252,10 @@ def normalize_entry(
         out["editor"] = latexify(out["editor"])
     if "title" in out:
         out["title"] = latexify(out["title"])
-        if do_titlecase and etype != "book": # According to Jessica's example on the wiki the book title is not in title case
+        if do_titlecase: 
             out["title"] = smart_titlecase(out["title"])
+        if protect_titlecase:
+            out["title"] = protecting_titlecase(out["title"])
     if "booktitle" in out:
         out["booktitle"] = latexify(out["booktitle"])
         if do_titlecase:
@@ -253,6 +266,11 @@ def normalize_entry(
         out["publisher"] = latexify(out["publisher"])
     if "pages" in out:
         out["pages"] = normalize_pages(out["pages"])
+    if "year" not in out and "date" in out:
+        year_match = re.search(r"\b(19|20)\d{2}\b", out["date"])
+        if year_match:
+            out["year"] = year_match.group(0)
+            out.pop("date")
 
     missing = [r for r in spec["required_fields"] if r not in out or not out[r].strip()]
     if missing:
@@ -267,6 +285,7 @@ def normalize_entry(
 def clean_bibtex_text(
     text: str,
     do_titlecase: bool = True,
+    protect_titlecase: bool = False,
     regen_keys: bool = False,
     journal_abbrev: dict[str, str] | None = None,
 ) -> str:
@@ -277,6 +296,7 @@ def clean_bibtex_text(
         normalize_entry(
             e,
             do_titlecase=do_titlecase,
+            protect_titlecase=protect_titlecase,
             regen_keys=regen_keys,
             journal_abbrev=journal_abbrev,
         )
